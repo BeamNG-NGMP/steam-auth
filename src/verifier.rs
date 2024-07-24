@@ -90,7 +90,7 @@ impl Verifier {
 
     /// Constructs and sends a synchronous verification request. Requires the `reqwest-09x`
     /// feature.
-    pub fn make_verify_request<S: AsRef<str>>(
+    pub async fn make_verify_request<S: AsRef<str>>(
         client: &reqwest::Client,
         querystring: S,
     ) -> Result<u64, Error> {
@@ -98,17 +98,15 @@ impl Verifier {
 
         let (parts, body) = req.into_parts();
 
-        client
+        let res = client
             .post(&parts.uri.to_string())
             .header("Content-Type", "application/x-www-form-urlencoded")
             .body(body)
-            .send().await
-            .map_err(Error::Reqwest)
-            .and_then(|mut response| {
-                let text = response.text().map_err(Error::Reqwest)?;
+            .send().await;
 
-                verifier.verify_response(text)
-            })
+
+        let text = res.unwrap().text().await.unwrap();
+        verifier.verify_response(text)
     }
 }
 
