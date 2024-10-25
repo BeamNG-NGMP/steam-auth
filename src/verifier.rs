@@ -108,6 +108,27 @@ impl Verifier {
         let text = res.unwrap().text().await.unwrap();
         verifier.verify_response(text)
     }
+
+    /// Constructs and sends a synchronous verification request. Requires the `reqwest-09x`
+    /// feature.
+    pub async fn make_verify_request_parsed(
+        client: &reqwest::Client,
+        sld: SteamLoginData,
+    ) -> Result<u64, Error> {
+        let (req, verifier) = Self::from_parsed(sld)?;
+
+        let (parts, body) = req.into_parts();
+
+        let res = client
+            .post(&parts.uri.to_string())
+            .header("Content-Type", "application/x-www-form-urlencoded")
+            .body(body)
+            .send().await;
+
+
+        let text = res.unwrap().text().await.unwrap();
+        verifier.verify_response(text)
+    }
 }
 
 #[derive(Clone, Deserialize, Serialize, Debug)]
